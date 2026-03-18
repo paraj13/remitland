@@ -19,7 +19,12 @@ import {
   Bell,
   Settings,
   MoreHorizontal,
+  X,
 } from "lucide-react";
+
+interface SidebarProps {
+  onClose?: () => void;
+}
 
 interface NavItem {
   label: string;
@@ -41,7 +46,7 @@ const SECONDARY_NAV: NavItem[] = [
   { label: "Settings", href: "/settings", icon: <Settings size={18} /> },
 ];
 
-export function Sidebar() {
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
 
   function isActive(href: string) {
@@ -49,15 +54,27 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar-sticky flex flex-col w-64 bg-[var(--color-sidebar-bg)] border-r border-gray-100 px-4 py-6">
-      {/* ---- Brand Logo ---- */}
-      <div className="flex items-center gap-2 px-3 mb-10">
-        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-          <span className="text-white font-black text-sm italic">R</span>
+    <aside className="sidebar-sticky flex flex-col w-64 bg-[var(--color-sidebar-bg)] border-r border-gray-100 px-4 py-6 shadow-xl md:shadow-none">
+      {/* ---- Brand Logo & Mobile Close ---- */}
+      <div className="flex items-center justify-between px-3 mb-10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+            <span className="text-white font-black text-sm italic">R</span>
+          </div>
+          <span className="text-black font-extrabold text-xl tracking-tight">
+            RemitLand
+          </span>
         </div>
-        <span className="text-black font-extrabold text-xl tracking-tight">
-          RemitLand
-        </span>
+        
+        {/* Mobile Close Button */}
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="md:hidden p-1 text-gray-400 hover:text-black transition-colors"
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* ---- Primary Navigation ---- */}
@@ -78,7 +95,7 @@ export function Sidebar() {
       </nav>
 
       {/* ---- Action Buttons ---- */}
-      <div className="flex flex-col gap-3 mb-6 mt-auto">
+      <div className=" flex flex-col gap-3 mb-6 mt-auto">
         <button className="btn btn-primary w-full text-sm font-bold py-3.5 rounded-full shadow-sm">
           Add Money
         </button>
@@ -88,7 +105,7 @@ export function Sidebar() {
       </div>
 
       {/* ---- Secondary Navigation ---- */}
-      <nav className="flex flex-col gap-1 mb-6" aria-label="Secondary navigation">
+      <nav className=" flex flex-col gap-1 mb-6" aria-label="Secondary navigation">
         {SECONDARY_NAV.map((item) => (
           <Link
             key={item.href}
@@ -113,7 +130,7 @@ export function Sidebar() {
 
 
       {/* ---- User Profile ---- */}
-      <div className="flex items-center justify-between px-2 pt-4 border-t border-gray-50">
+      <div className=" flex items-center justify-between px-2 pt-2 border-t border-gray-50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-sm font-bold border border-gray-200">
             KN

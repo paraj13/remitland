@@ -49,12 +49,6 @@ export function ReceiverModal() {
     dispatch(closeReceiverModal());
   }
 
-  const currencyBgClass =
-    selectedCurrency === "USD"
-      ? "currency-selected-usd"
-      : selectedCurrency === "AED"
-        ? "currency-selected-aed"
-        : "currency-selected-cad";
 
   return (
     <div
@@ -67,11 +61,11 @@ export function ReceiverModal() {
       }}
     >
       <div
-        className={`modal-content scrollbar-thin relative ${currencyBgClass}`}
+        className="modal-content scrollbar-thin relative bg-white"
       >
         <button
           onClick={handleClose}
-          className="absolute top-8 right-8 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors z-10"
+          className="sticky top-8 float-right mr-8 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors z-[60]"
           aria-label="Close receiver details"
         >
           <X size={20} />
@@ -113,14 +107,16 @@ export function ReceiverModal() {
                   <span className="text-gray-900 font-bold text-sm tracking-tight">
                     {acc.accountNumber}
                   </span>
-                  <img
-                    src={`https://flagcdn.com/w40/${acc.countryCode}.png`}
-                    alt={acc.currency}
-                    className="flag-circle-sm"
-                  />
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">
-                    {acc.currency}
-                  </span>
+                  <div className="flex items-center gap-2 bg-gray-100 px-2.5 py-2 rounded-full">
+                    <img
+                      src={`https://flagcdn.com/w40/${acc.countryCode}.png`}
+                      alt={acc.currency}
+                      className="w-4 h-4 rounded-full object-cover"
+                    />
+                    <span className="text-[10px] font-semibold text-gray-500 uppercase">
+                      {acc.currency}
+                    </span>
+                  </div>
                 </button>
               );
             })}
@@ -187,8 +183,8 @@ export function ReceiverModal() {
           {/* ---- Transactions Section ---- */}
           <div className="flex flex-col gap-8">
             <div className="flex items-center justify-between">
-              <h3 className="text-[22px] font-bold text-gray-900 tracking-tight">
-                Transactions With {receiver.name.split(" ")[0]}
+              <h3 className="text-[22px] font-medium text-gray-900 tracking-tight">
+                Transactions With <span className="font-bold">{receiver.name.split(" ")[0]}</span>
               </h3>
 
               <div className="flex items-center gap-4">

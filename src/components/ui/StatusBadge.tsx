@@ -17,8 +17,8 @@ const STATUS_CLASS_MAP: Record<TransactionStatus, string> = {
   approved: "badge-success",
   Pending: "badge-pending",
   Cancelled: "badge-cancelled",
-  Rejected: "badge-rejected",
-  failed: "badge-rejected",
+  Rejected: "badge-action",
+  failed: "badge-action",
   needs_action: "badge-action",
 };
 
@@ -28,8 +28,8 @@ const STATUS_LABEL_MAP: Record<TransactionStatus, string> = {
   approved: "approved",
   Pending: "Pending",
   Cancelled: "Cancelled",
-  Rejected: "Rejected",
-  failed: "failed",
+  Rejected: "needs action",
+  failed: "needs action",
   needs_action: "needs action",
 };
 

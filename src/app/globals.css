@@ -161,6 +161,21 @@
     background-color: var(--color-surface-secondary);
   }
 
+  /* Red outline for 'Upload Receipt' / 'Needs Action' */
+  .btn-red-outline {
+    background-color: #fff2f2;
+    color: #eb5757;
+    border: 1px solid #ffd1d1;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .btn-red-outline:hover {
+    background-color: #ffebeb;
+    border-color: #eb5757;
+  }
+
   /* ---- Sidebar Nav Item ---- */
   .sidebar-nav-item {
     display: flex;
@@ -250,17 +265,12 @@
     transition: background-color 0.15s ease;
   }
 
+  .data-table tr:nth-child(even) {
+    background-color: #fafbfc; /* Striped effect */
+  }
+
   .data-table tr:last-child {
     border-bottom: none;
-  }
-
-  .data-table tr.row-red {
-    background-color: #fff2f2;
-    border-bottom-color: #ffe0e0;
-  }
-
-  .data-table tr.row-red:hover td {
-    background-color: #ffe0e0;
   }
 
   /* ---- Card ---- */
@@ -277,7 +287,7 @@
     inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
-    z-index: 50;
+    z-index: 999;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -289,7 +299,7 @@
     border-radius: 1.25rem;
     box-shadow: var(--shadow-modal);
     width: 100%;
-    max-width: 780px;
+    max-width: 1100px; /* Increased to avoid table scroll */
     max-height: 90vh;
     overflow-y: auto;
     animation: modalSlideIn 0.25s ease;
@@ -394,7 +404,7 @@
 
   .pagination-btn.active {
     background-color: var(--color-text-primary);
-    color: var(--color-text-inverted);
+    color: #ffffff; /* Fix: white text on black background */
     border-color: var(--color-text-primary);
   }
 
@@ -490,6 +500,7 @@
     color: #1a1a1a;
     background: transparent;
     -moz-appearance: textfield;
+    appearance: textfield;
   }
   .stepper-input::-webkit-outer-spin-button,
   .stepper-input::-webkit-inner-spin-button {

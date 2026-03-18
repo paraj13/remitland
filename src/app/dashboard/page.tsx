@@ -41,12 +41,12 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-white p-8">
+      <div className="min-h-screen bg-white p-4 sm:p-8">
         <div className="max-w-[1200px] mx-auto flex flex-col gap-10">
           {/* ---- Top Row: Balance + Quick Conversion ---- */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {/* Account Balance Card */}
-            <div className="bg-white rounded-[2.5rem] p-10 border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] lg:col-span-2">
+            <div className="bg-white rounded-[1.5rem] p-10 border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] lg:col-span-2">
               <div className="flex items-start justify-between mb-8">
                 <h2 className="text-[39px] font-bold text-gray-900 leading-[1.1] tracking-tight">
                   Account
@@ -99,7 +99,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick Conversion Widget */}
-            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-6">
+            <div className="bg-white rounded-[1.5rem] p-8 border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col gap-6">
               <h2 className="text-xl font-bold text-gray-900">Quick Conversion</h2>
 
               <div className="flex flex-col gap-3">
@@ -195,7 +195,11 @@ export default function DashboardPage() {
 
             {/* Table Container */}
             <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-              <TransactionTable transactions={transactions} variant="dashboard" />
+              <TransactionTable 
+                transactions={transactions} 
+                variant="dashboard" 
+                onRowClick={handleTransactionClick}
+              />
             </div>
           </div>
         </div>

@@ -35,6 +35,8 @@ interface TransactionTableProps {
   externalSearchQuery?: string;
   /** External control for action toggle (optional) */
   externalOnlyActionNeeded?: boolean;
+  /** Callback for row click */
+  onRowClick?: (tx: Transaction) => void;
 }
 
 const ROWS_PER_PAGE = 5;
@@ -53,6 +55,7 @@ export function TransactionTable({
   variant = "modal",
   externalSearchQuery,
   externalOnlyActionNeeded,
+  onRowClick,
 }: TransactionTableProps) {
   const dispatch = useAppDispatch();
   const [internalSearchQuery, setInternalSearchQuery] = useState("");
@@ -83,14 +86,6 @@ export function TransactionTable({
 
     return matchesSearch && matchesAction;
   });
-
-  // ---- Handle Row Styling ----
-  const getRowClass = (status: TransactionStatus) => {
-    if (["cancelled", "rejected", "failed"].includes(status.toLowerCase())) {
-      return "row-red";
-    }
-    return "";
-  };
 
   // ---- Pagination ----
   const totalPages = Math.ceil(filtered.length / pageSize);
@@ -198,7 +193,11 @@ export function TransactionTable({
               </tr>
             ) : (
               paginated.map((tx) => (
-                <tr key={tx.id} className={getRowClass(tx.status)}>
+                <tr 
+                  key={tx.id} 
+                  onClick={() => onRowClick && onRowClick(tx)}
+                  className={onRowClick ? "cursor-pointer hover:bg-gray-50/50 transition-colors" : ""}
+                >
                   {variant === "modal" && (
                     <td className="text-gray-400 text-[11px] font-medium">
                       {tx.id}
@@ -266,16 +265,26 @@ export function TransactionTable({
                     <StatusBadge status={tx.status} />
                   </td>
                   <td>
-                    {variant === "dashboard" ? (
-                    <div className="flex items-center gap-4 text-[13px] font-normal">
-                      <button className="text-blue-600 hover:opacity-70 transition-opacity">
-                        View
+                    {(tx.status === "needs_action" || tx.status === "Rejected") ? (
+                      <button 
+                        className="btn-red-outline rounded-md whitespace-nowrap"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          alert("Upload logic not implemented");
+                        }}
+                      >
+                        Upload Receipt
                       </button>
-                      <span className="text-gray-300 text-sm">|</span>
-                      <button className="text-blue-600 hover:opacity-70 transition-opacity">
-                        Download File
-                      </button>
-                    </div>
+                    ) : variant === "dashboard" ? (
+                      <div className="flex items-center gap-4 text-[13px] font-normal">
+                        <button className="text-blue-600 hover:opacity-70 transition-opacity">
+                          View
+                        </button>
+                        <span className="text-gray-300 text-sm">|</span>
+                        <button className="text-blue-600 hover:opacity-70 transition-opacity">
+                          Download File
+                        </button>
+                      </div>
                     ) : (
                       <TransactionActions
                         transaction={tx}
@@ -376,15 +385,14 @@ function TransactionActions({
         </Button>
       );
     case "needs_action":
+    case "Rejected":
       return (
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-xs flex items-center gap-1 border-orange-200 text-orange-700 bg-orange-50"
+        <button 
+          className="btn-red-outline rounded-md whitespace-nowrap"
+          onClick={() => alert("Upload logic not implemented")}
         >
-          <AlertCircle size={12} />
           Upload Receipt
-        </Button>
+        </button>
       );
     default:
       return (
