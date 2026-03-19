@@ -36,7 +36,7 @@ const PRIMARY_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
   { label: "Conversion", href: "/conversion", icon: <ArrowLeftRight size={18} /> },
   { label: "Wallet", href: "/wallet", icon: <Wallet size={18} /> },
-  { label: "Beneficiaries", href: "/receivers", icon: <Users size={18} /> },
+  { label: "Receivers", href: "/receivers", icon: <Users size={18} /> },
   { label: "Reports", href: "/reports", icon: <FileText size={18} /> },
   { label: "Team", href: "/team", icon: <UserCog size={18} /> },
 ];

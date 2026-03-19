@@ -64,7 +64,7 @@ export default function ReceiversPage() {
               onClick={handleViewReceiver}
               className="w-full sm:w-auto px-10 rounded-xl"
             >
-              View receiver
+              View Receiver
             </Button>
           </div>
         </div>
