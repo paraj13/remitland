@@ -43,12 +43,56 @@ interface TransactionTableProps {
 
 const ROWS_PER_PAGE = 5;
 
-/** Trigger a download of a sample file */
-function downloadSampleFile() {
+/** Trigger a download of a transaction receipt in Word format */
+function downloadReceipt(tx: Transaction | null) {
+  if (!tx) return;
+  const content = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'><title>Transaction Receipt</title>
+    <style>
+      body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #333; }
+      .header { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #2563eb; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+      .row { margin-bottom: 10px; }
+      .label { font-weight: bold; color: #6b7280; width: 150px; display: inline-block; }
+      .value { color: #111827; font-weight: 600;}
+      .table { border-collapse: collapse; width: 100%; margin-top: 30px; }
+      .table th, .table td { border: 1px solid #e5e7eb; padding: 12px; text-align: left; }
+      .table th { background-color: #f9fafb; font-weight: bold; color: #374151; }
+      .footer { margin-top: 40px; font-size: 12px; color: #9ca3af; text-align: center; padding-top: 20px; border-top: 1px solid #eee; }
+    </style>
+    </head>
+    <body>
+      <div class="header">Transaction Receipt - ${tx.requestId}</div>
+      <div class="row"><span class="label">Date &amp; Time:</span> <span class="value">${tx.dateTime}</span></div>
+      <div class="row"><span class="label">Status:</span> <span class="value" style="text-transform: capitalize;">${tx.status}</span></div>
+      <div class="row"><span class="label">Type:</span> <span class="value">${tx.type}</span></div>
+      
+      <table class="table">
+        <tr>
+          <th>From</th>
+          <th>To</th>
+          <th>Account Number</th>
+          <th>Amount</th>
+        </tr>
+        <tr>
+          <td>${tx.from || 'N/A'}</td>
+          <td>${tx.to}</td>
+          <td>${tx.accountNumber || 'N/A'}</td>
+          <td><b style="color: #2563eb;">${tx.amount} ${tx.currency}</b></td>
+        </tr>
+      </table>
+      <div class="footer">Generated securely by Modremit Platform</div>
+    </body>
+    </html>
+  `;
+  const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.href = "/sample.docx";
-  link.download = "remitland-transaction-report.docx";
+  link.href = url;
+  link.download = `Receipt_${tx.requestId}.doc`;
+  document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
 }
 
 export function TransactionTable({
@@ -210,7 +254,7 @@ export function TransactionTable({
               <th>Date &amp; Time</th>
               <th>Request ID</th>
               <th>Type</th>
-              <th>From</th>
+              {variant === "dashboard" && <th>From</th>}
               <th>To</th>
               <th>Account Number</th>
               <th>Amount</th>
@@ -276,9 +320,11 @@ export function TransactionTable({
                       )}
                     </div>
                   </td>
-                  <td className="font-medium text-[13px] text-gray-800">
-                    {tx.from}
-                  </td>
+                  {variant === "dashboard" && (
+                    <td className="font-medium text-[13px] text-gray-800">
+                      {tx.from}
+                    </td>
+                  )}
                   <td className="font-medium text-[13px] text-gray-800">
                     <div className="flex items-center gap-2">
                       {tx.type === "Add money" && (
@@ -325,7 +371,7 @@ export function TransactionTable({
                         </button>
                         <span className="text-gray-300 text-sm">|</span>
                         <button 
-                          onClick={(e) => { e.stopPropagation(); downloadSampleFile(); }}
+                          onClick={(e) => { e.stopPropagation(); downloadReceipt(tx); }}
                           className="text-blue-600 hover:opacity-70 transition-opacity"
                         >
                           Download File
@@ -335,7 +381,7 @@ export function TransactionTable({
                       <TransactionActions
                         transaction={tx}
                         onStatusChange={handleStatusChange}
-                        onDownload={downloadSampleFile}
+                        onDownload={() => downloadReceipt(tx)}
                       />
                     )}
                   </td>
@@ -437,16 +483,6 @@ function TransactionActions({
       );
     default:
       return (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs flex items-center gap-1"
-          >
-            <Eye size={12} />
-            View
-          </Button>
-          <span className="text-gray-300 text-sm">|</span>
           <Button
             variant="ghost"
             size="sm"
@@ -455,7 +491,6 @@ function TransactionActions({
           >
             Download
           </Button>
-        </div>
       );
   }
 }

@@ -9,12 +9,8 @@ import { ChevronDown, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 const CURRENCIES = [
   { code: "USD", name: "US Dollar", flag: "us" },
-  { code: "EUR", name: "Euro", flag: "eu" },
-  { code: "GBP", name: "British Pound", flag: "gb" },
   { code: "AED", name: "UAE Dirham", flag: "ae" },
   { code: "CAD", name: "Canadian Dollar", flag: "ca" },
-  { code: "INR", name: "Indian Rupee", flag: "in" },
-  { code: "USDT", name: "Tether", flag: "us" }
 ];
 
 export default function NewTransactionPage() {

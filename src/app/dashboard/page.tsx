@@ -100,7 +100,7 @@ export default function DashboardPage() {
                 </h2>
                 <button 
                   onClick={() => router.push('/transactions/new')}
-                  className="flex items-center gap-1.5 text-base font-bold text-blue-600 hover:opacity-80 transition-opacity"
+                  className="flex items-center gap-1.5 text-base font-bold text-blue-600 hover:opacity-80 transition-opacity cursor-pointer"
                 >
                   New Transaction
                   <ArrowUpRight size={20} />

@@ -1,189 +1,88 @@
-# RemitLand — Frontend Dashboard
+# Modremit Platform
 
-A production-ready remittance dashboard built with **Next.js 14**, **TypeScript**, **TailwindCSS**, and **Redux Toolkit**.
+Welcome to the **Modremit** money transfer platform. This repository contains the Next.js frontend application for the Remitland platform, including the dashboard, compliance features, recipient management, and transaction flows.
 
----
+## 🚀 Quick Start & Setup
 
-## Table of Contents
+Follow these instructions to get the project up and running on your local machine.
 
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Quick Start](#quick-start)
-- [Features](#features)
-- [Environment Variables](#environment-variables)
-- [API Integration Guide](#api-integration-guide)
-- [Real-time (Socket.IO)](#real-time-socketio)
+### 1. Prerequisites
 
----
+Make sure you have the following installed:
+- **Node.js** (v18 or higher recommended)
+- **npm** (comes with Node.js)
 
-## Tech Stack
+### 2. Installation
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
-| Styling | TailwindCSS v4 (no inline styles) |
-| State Management | Redux Toolkit + redux-persist |
-| Real-time | Socket.IO Client |
-| HTTP Client | Axios |
-| Icons | Lucide React |
-
----
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── layout.tsx          # Root layout with Redux provider
-│   ├── page.tsx            # Redirects to /receivers
-│   ├── receivers/          # Receivers page (main CTA)
-│   └── dashboard/          # Dashboard page (Appendix 2)
-├── components/
-│   ├── ui/                 # Reusable UI primitives
-│   │   ├── Button.tsx
-│   │   ├── StatusBadge.tsx
-│   │   ├── Modal.tsx
-│   │   ├── SearchInput.tsx
-│   │   ├── Pagination.tsx
-│   │   └── CurrencyTab.tsx
-│   ├── transactions/
-│   │   └── TransactionTable.tsx  # Table with search + pagination
-│   ├── receivers/
-│   │   └── ReceiverModal.tsx     # Appendix 1 popup
-│   └── layout/
-│       ├── Sidebar.tsx     # Left nav
-│       └── AppShell.tsx    # Page shell with socket hook
-├── store/
-│   ├── index.ts            # Redux store + persist config
-│   ├── hooks.ts            # Typed useAppSelector/useAppDispatch
-│   └── slices/
-│       ├── currencySlice.ts   # Persisted selected currency
-│       ├── transactionSlice.ts
-│       └── uiSlice.ts         # Modal open/close state
-├── hooks/
-│   └── useSocketUpdates.ts # Socket.IO real-time listener
-├── lib/
-│   └── socket.ts           # Socket.IO singleton client
-├── data/
-│   └── mockData.ts         # JSON mock data (replace with API)
-└── types/
-    └── index.ts            # TypeScript type definitions
-```
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### 1. Clone and install
+Clone the repository and install the dependencies:
 
 ```bash
+# Clone the repository (if you haven't already)
+git clone <repository-url>
 cd remitland
+
+# Install npm dependencies
 npm install
 ```
 
-### 2. Set up environment variables
+### 3. Environment Configuration
+
+Copy the example environment file to create your local environment configuration:
 
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your values
 ```
 
-### 3. Run the development server
+Open `.env.local` and ensure the `NEXT_PUBLIC_API_URL` exactly matches your backend's local address (usually `http://127.0.0.1:8000` or `http://localhost:8000`).
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### 4. Running the Application
+
+Start the Next.js development server:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+The application will be available at [http://localhost:3000](http://localhost:3000). 
+*(If port 3000 is taken, Next.js will typically assign `3001` or another available port. Check your terminal output!)*
 
-- **Receivers page**: [http://localhost:3000/receivers](http://localhost:3000/receivers)
-- **Dashboard page**: [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
+## 🌐 Local Proxy & CORS
 
----
+To avoid CORS issues during development, this Next.js app uses **API Rewrites**. 
+Any request made to `/api/*` from the frontend will be automatically proxied to your Laravel backend URL defined in `NEXT_PUBLIC_API_URL`.
 
-## Features
-
-| Feature | Status |
-|---------|--------|
-| Receivers page with "View receiver" CTA | ✅ |
-| ReceiverModal (Appendix 1 popup) | ✅ |
-| 3 currency tabs (AED/USD/CAD) — USD default | ✅ |
-| Last selected currency persisted via Redux | ✅ |
-| Client-side search (To field + Status) | ✅ |
-| Only Action Needed toggle | ✅ |
-| Pagination (5 rows per page) | ✅ |
-| Download CTA (sample .docx) | ✅ |
-| Status badge variants | ✅ |
-| Dashboard page (Appendix 2) | ✅ |
-| Clicking transaction row opens modal | ✅ |
-| Socket.IO real-time client hook | ✅ (ready for backend) |
-| Mobile responsive modal | ✅ |
-| No inline CSS | ✅ |
-
----
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_SOCKET_URL` | Socket.IO server URL | `http://localhost:3001` |
-| `NEXT_PUBLIC_API_URL` | Laravel API base URL | `http://localhost:8000/api` |
-
----
-
-## API Integration Guide
-
-All mock data lives in `src/data/mockData.ts`. When the backend is ready:
-
-### 1. Fetch currencies
-
-Replace the `CURRENCIES` constant with:
+When writing new requests, **always use the relative path**:
 ```typescript
-// In your component or Redux thunk:
-const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/currencies`);
+// ✅ DO THIS
+const res = await fetch("/api/transactions");
+
+// ❌ DO NOT DO THIS
+const res = await fetch("http://localhost:8000/api/transactions");
 ```
 
-### 2. Fetch transactions
+## 🛠 Tech Stack
 
-```typescript
-const response = await axios.get(
-  `${process.env.NEXT_PUBLIC_API_URL}/transactions?currency=USD`
-);
-dispatch(setTransactions(response.data));
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**: [Redux Toolkit](https://redux-toolkit.js.org/) + React-Redux
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Real-time**: Socket.IO Client
+
+## 📦 Project Structure
+
+```text
+├── src/
+│   ├── app/                # Next.js App Router (pages & layouts)
+│   ├── components/         # Reusable UI components (buttons, modals, tables)
+│   ├── store/              # Redux slices and store configuration
+│   ├── lib/                # Utility functions, Socket config
+│   ├── data/               # Mock data for development
+│   └── types/              # Global TypeScript definitions
+├── public/                 # Static assets (images, fonts, sample files)
+├── tailwind.config.ts      # Tailwind CSS configuration
+└── next.config.ts          # Next.js configuration (includes API rewrites)
 ```
-
-### 3. Update transaction status (triggers Socket.IO broadcast)
-
-```typescript
-await axios.patch(
-  `${process.env.NEXT_PUBLIC_API_URL}/transactions/${id}/status`,
-  { status: "Approved" }
-);
-// Socket.IO will automatically update all connected clients
-```
-
----
-
-## Real-time (Socket.IO)
-
-The `useSocketUpdates` hook in `src/hooks/useSocketUpdates.ts` is mounted in `AppShell`. It listens for `transaction:updated` events from the Socket.IO server.
-
-When the backend is ready, the Node.js Socket.IO server should emit:
-```json
-{
-  "event": "transaction:updated",
-  "payload": {
-    "id": 1,
-    "status": "Approved",
-    ...
-  }
-}
-```
-
-The Redux `upsertTransaction` action handles both **new** and **updated** transactions automatically.
