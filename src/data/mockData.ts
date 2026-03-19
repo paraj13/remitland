@@ -21,8 +21,8 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     dateTime: "Apr 19 2025 | 14:30",
     requestId: "6A5S1D5A",
     type: "Send Money International",
-    from: "Sarah Williams",
-    to: "John Doe",
+    from: "John Bonham",
+    to: "Sarah Johnson",
     currency: "AED",
     amount: "12,000.00",
     status: "Success",
@@ -65,7 +65,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     dateTime: "Jun 12 2025 | 20:15",
     requestId: "6A5S1D5A",
     type: "Add money",
-    from: "Chen Wei",
+    from: "John Bonham",
     to: "You",
     currency: "AED",
     amount: "50,000,000.00",
@@ -77,7 +77,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
     requestId: "6A5S1D5A",
     type: "Send Money International",
     from: "Emily Carter",
-    to: "Aisha Khan",
+    to: "John Bonham",
     currency: "USD",
     amount: "12,000.00",
     status: "Pending",
@@ -141,9 +141,9 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
 
 export const MOCK_RECEIVER: Receiver = {
   id: 1,
-  name: "John Bonhamm",
+  name: "John Bonham",
   email: "john@email.com",
-  type: "Individual",
+  type: "individual",
   accounts: [
     { currency: "AED", accountNumber: "1982631287368", flag: "🇦🇪", countryCode: "ae" },
     { currency: "USD", accountNumber: "1982631287368", flag: "🇺🇸", countryCode: "us" },
@@ -154,7 +154,7 @@ export const MOCK_RECEIVER: Receiver = {
   branchName: "Main Street Branch",
   swiftBic: "KJA98127",
   transactions: MOCK_TRANSACTIONS.filter(
-    (t) => t.to === "John Bonham" || t.to === "Emily Carter"
+    (t) => t.from === "John Bonham" || t.to === "John Bonham"
   ),
 };
 

@@ -130,7 +130,9 @@ export function ReceiverModal() {
   }
 
   // Final display items
-  const filteredModalTransactions = modalItems.filter(t => {
+  const baseItems = (modalItems.length > 0) ? modalItems : (receiver.transactions || []);
+  
+  const filteredModalTransactions = baseItems.filter(t => {
     if (!receiver) return false;
     
     // Match either SENDER or RECEIVER exactly against the clicked profile
