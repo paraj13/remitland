@@ -130,7 +130,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
 
 export const MOCK_RECEIVER: Receiver = {
   id: 1,
-  name: "John Bonham",
+  name: "John Bonhamm",
   email: "john@email.com",
   type: "Individual",
   accounts: [

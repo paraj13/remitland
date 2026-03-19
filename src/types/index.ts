@@ -43,6 +43,8 @@ export interface Transaction {
   currency: CurrencyCode;
   amount: string;
   status: TransactionStatus;
+  accountNumber?: string;
+  receiverDetails?: Receiver;
 }
 
 export interface ReceiverAccount {
@@ -56,13 +58,50 @@ export interface Receiver {
   id: number;
   name: string;
   email: string;
-  type: "Individual" | "Business";
+  type: string;
   accounts: ReceiverAccount[];
   country: string;
   bankName: string;
   branchName: string;
   swiftBic: string;
-  transactions: Transaction[];
+  transactions?: Transaction[];
+}
+
+export interface ApiUser {
+  id: number;
+  name: string;
+  email: string;
+  type: string;
+  country: string;
+  bank_name: string;
+  branch_name: string;
+  swift_code: string;
+  account_number: string;
+  email_verified_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiTransaction {
+  id: number;
+  request_id: string;
+  user_id: number;
+  account_number: string;
+  type: string;
+  to_name: string;
+  amount: string;
+  currency: CurrencyCode;
+  status: string;
+  is_queued: boolean;
+  created_at: string;
+  updated_at: string;
+  user: ApiUser;
+}
+
+export interface ApiResponse<T> {
+  status: boolean;
+  message: string;
+  data: T;
 }
 
 export interface QuickConversion {

@@ -1,22 +1,21 @@
 // ============================================================
 // ReceiverModal Component (Appendix 1 popup)
 // Displays receiver details with:
-//   - Currency account tabs (AED / USD / CAD) — last selected persists in Redux
+//   - Currency account tabs derived from transaction history
 //   - Receiver info (country, bank, branch, SWIFT/BIC)
 //   - "Transactions With [Name]" section with full TransactionTable
-//   - Download CTA, Search, Only Action Needed toggle, Pagination
+//   - Search and live filtering
 // ============================================================
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   X,
   Globe,
   Building2,
   GitBranch,
   Code2,
-  ChevronDown,
   ChevronUp,
   Search,
   Download,
@@ -26,29 +25,108 @@ import { TransactionTable } from "@/components/transactions/TransactionTable";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { closeReceiverModal } from "@/store/slices/uiSlice";
 import { setSelectedCurrency } from "@/store/slices/currencySlice";
+import { fetchModalTransactions, fetchTransactions } from "@/store/slices/transactionSlice";
 import { CurrencyCode } from "@/types";
+import { getSocket } from "@/lib/socket";
 
 export function ReceiverModal() {
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector((state) => state.ui.isReceiverModalOpen);
   const receiver = useAppSelector((state) => state.ui.activeReceiver);
   const selectedCurrency = useAppSelector((state) => state.currency.selected);
+  const { modalItems, modalLoading } = useAppSelector((state) => state.transactions);
   const [showMore, setShowMore] = useState(false);
 
-  // Lifting state for search and toggle to the header
+  // Search and toggle state
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [onlyActionNeeded, setOnlyActionNeeded] = useState(false);
+
+  // 1. On mount/open, fetch ALL transactions for this receiver to find available currencies
+  useEffect(() => {
+    if (isOpen && receiver) {
+      // Clear search when opening a new receiver
+      setSearchQuery("");
+      setIsSearchOpen(false);
+      // Fetch all for this receiver
+      dispatch(fetchModalTransactions()); 
+    }
+
+    // WebSocket listener for real-time updates when modal is open
+    const s = getSocket();
+    if (s) {
+      s.on("status_updated", (data: any) => {
+        if (isOpen && receiver) {
+          console.log("Modal real-time update received:", data);
+          // Re-fetch both dashboard and modal data to be safe
+          dispatch(fetchTransactions());
+          dispatch(fetchModalTransactions(selectedCurrency || undefined));
+        }
+      });
+    }
+
+    return () => {
+      const s = getSocket();
+      if (s) {
+        s.off("status_updated");
+      }
+    };
+  }, [isOpen, receiver, dispatch, selectedCurrency]);
+
+  // 2. Derive unique currencies and keep them stable
+  const [stableCurrencies, setStableCurrencies] = useState<any[]>([]);
+  const [lastReceiverId, setLastReceiverId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (receiver && modalItems.length > 0 && receiver.id !== lastReceiverId) {
+      // Get unique currency codes from all transactions (no name matching as requested)
+      const uniqueCodes = Array.from(new Set(modalItems.map((t) => t.currency)));
+      
+      const mapped = uniqueCodes.map(code => {
+        const firstMatch = modalItems.find(t => t.currency === code);
+        const countryMap: Record<string, string> = { 
+          USD: "us", AED: "ae", CAD: "ca", EUR: "eu", GBP: "gb", INR: "in", USDT: "us" 
+        };
+        
+        // Priority: Transaction account > Receiver account > N/A
+        const accountNumber = firstMatch?.accountNumber || 
+                              receiver.accounts?.find(a => a.currency === code)?.accountNumber || 
+                              "N/A";
+
+        return {
+          code,
+          accountNumber,
+          countryCode: countryMap[code as string] || "us"
+        };
+      });
+      
+      setStableCurrencies(mapped);
+      setLastReceiverId(receiver.id);
+    }
+  }, [modalItems, receiver, lastReceiverId]);
 
   if (!isOpen || !receiver) return null;
 
-  function handleCurrencySelect(code: CurrencyCode) {
-    dispatch(setSelectedCurrency(code));
+  function handleCurrencySelect(code: CurrencyCode | null) {
+    // Cast to any to bypass strict type check if the action payload is slightly different
+    dispatch(setSelectedCurrency(code as any));
+    // Fetch filtered transactions from API
+    // Passing undefined fetches all transactions for the modal context
+    dispatch(fetchModalTransactions((code as string) || undefined));
   }
 
   function handleClose() {
     dispatch(closeReceiverModal());
   }
 
+  // Final display items
+  const filteredModalTransactions = modalItems.filter(t => {
+    if (!receiver) return false;
+    // const isNameMatch = t.to.toLowerCase().trim() === receiver.name.toLowerCase().trim();
+    // If we have a selected currency, filter by it. Otherwise, show all for this receiver.
+    const isCurrencyMatch = selectedCurrency ? t.currency === selectedCurrency : true;
+    return isCurrencyMatch;
+  });
 
   return (
     <div
@@ -61,11 +139,11 @@ export function ReceiverModal() {
       }}
     >
       <div
-        className="modal-content scrollbar-thin relative bg-white"
+        className="modal-content scrollbar-thin relative bg-white max-h-[90vh] overflow-y-auto rounded-[2rem] w-[95%] max-w-[1000px]"
       >
         <button
           onClick={handleClose}
-          className="sticky top-8 float-right mr-8 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors z-[60]"
+          className="sticky top-8 float-right mr-8 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors z-[60] bg-white shadow-sm"
           aria-label="Close receiver details"
         >
           <X size={20} />
@@ -73,7 +151,7 @@ export function ReceiverModal() {
 
         <div className="p-8 sm:p-12">
           {/* ---- Header Section ---- */}
-          <div className="mb-10">
+          <div className="mb-10 text-left">
             <div className="flex items-center gap-3">
               <h2
                 id="receiver-modal-title"
@@ -92,38 +170,64 @@ export function ReceiverModal() {
 
           {/* ---- Account Selector Tabs ---- */}
           <div className="flex flex-wrap gap-4 mb-12">
-            {receiver.accounts.map((acc) => {
-              const isSelected = selectedCurrency === acc.currency;
-              return (
-                <button
-                  key={acc.currency}
-                  onClick={() => handleCurrencySelect(acc.currency)}
-                  className={`flex items-center gap-2.5 px-6 py-4 rounded-xl border-2 transition-all ${
-                    isSelected
-                      ? "border-yellow-400 bg-yellow-50/20"
-                      : "border-gray-50 bg-gray-50/50 grayscale opacity-40 hover:grayscale-0 hover:opacity-100"
-                  }`}
-                >
-                  <span className="text-gray-900 font-bold text-sm tracking-tight">
-                    {acc.accountNumber}
-                  </span>
-                  <div className="flex items-center gap-2 bg-gray-100 px-2.5 py-2 rounded-full">
-                    <img
-                      src={`https://flagcdn.com/w40/${acc.countryCode}.png`}
-                      alt={acc.currency}
-                      className="w-4 h-4 rounded-full object-cover"
-                    />
-                    <span className="text-[10px] font-semibold text-gray-500 uppercase">
-                      {acc.currency}
+            {/* "All" Tab */}
+            <button
+              onClick={() => handleCurrencySelect(null)}
+              className={`flex items-center gap-2.5 p-1 rounded-xl border-2 transition-all ${
+                selectedCurrency === null
+                  ? "border-yellow-400 bg-yellow-50/20 shadow-sm"
+                  : "border-gray-50 grayscale-0 hover:opacity-100"
+              }`}
+            >
+              <div className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-full">
+                <Globe size={14} className="text-gray-500" />
+                <span className="text-[10px] font-bold text-gray-900 uppercase tracking-tight">
+                  All
+                </span>
+              </div>
+            </button>
+
+            {stableCurrencies.length > 0 ? (
+              stableCurrencies.map((acc: any) => {
+                const isSelected = selectedCurrency === acc.code;
+                return (
+                  <button
+                    key={acc.code as string}
+                    onClick={() => handleCurrencySelect(acc.code as any)}
+                    className={`btn-sm flex items-center gap-2.5 px-2 py-1 rounded-xl border-2 transition-all ${
+                      isSelected
+                        ? "border-yellow-400 bg-yellow-50/20 shadow-sm"
+                        : "border-gray-50 grayscale-0 hover:opacity-100"
+                    }`}
+                  >
+                    <span className="text-gray-900 font-bold text-sm tracking-tight">
+                      {acc.accountNumber}
                     </span>
-                  </div>
-                </button>
-              );
-            })}
+                    <div className="flex items-center gap-2 bg-gray-100 px-2.5 py-2 rounded-full">
+                      <img
+                        src={`https://flagcdn.com/w40/${acc.countryCode}.png`}
+                        alt={acc.code as string}
+                        className="w-4 h-4 rounded-full object-cover"
+                      />
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase">
+                        {acc.code as string}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })
+            ) : modalLoading ? (
+              <div className="flex items-center gap-2 px-6 py-4">
+                <div className="w-4 h-4 border-2 border-yellow-400/20 border-t-yellow-400 rounded-full animate-spin" />
+                <span className="text-sm text-gray-400 italic">Loading...</span>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 italic">No associated currencies found in history</p>
+            )}
           </div>
 
           {/* ---- Info Grid ---- */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-10 gap-x-20 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-10 gap-x-20 mb-8 border-t border-gray-50 pt-10 text-left">
             <div>
               <div className="flex items-center gap-2 mb-2 opacity-30 text-gray-900">
                 <Globe size={14} />
@@ -181,17 +285,35 @@ export function ReceiverModal() {
           </div>
 
           {/* ---- Transactions Section ---- */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 text-left">
             <div className="flex items-center justify-between">
               <h3 className="text-[22px] font-medium text-gray-900 tracking-tight">
                 Transactions With <span className="font-bold">{receiver.name.split(" ")[0]}</span>
               </h3>
 
               <div className="flex items-center gap-4">
-                {/* Search Icon */}
-                <div className="w-10 h-10 border border-gray-100 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
-                  <Search size={18} />
+                {/* Search Integration */}
+                <div className="flex items-center gap-2">
+                  {isSearchOpen && (
+                    <input
+                      type="text"
+                      placeholder="Search transactions..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-full text-xs font-medium focus:outline-none focus:border-blue-200 transition-all w-48"
+                      autoFocus
+                    />
+                  )}
+                  <div 
+                    onClick={() => setIsSearchOpen(!isSearchOpen)}
+                    className={`w-10 h-10 border flex items-center justify-center rounded-full transition-colors cursor-pointer ${
+                      isSearchOpen ? "bg-blue-50 border-blue-200 text-blue-500" : "border-gray-100 text-gray-300 hover:text-gray-500"
+                    }`}
+                  >
+                    <Search size={18} />
+                  </div>
                 </div>
+
                 {/* Download Icon */}
                 <div className="w-10 h-10 border border-gray-100 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
                   <Download size={18} />
@@ -219,12 +341,20 @@ export function ReceiverModal() {
               </div>
             </div>
 
-            <TransactionTable
-              transactions={receiver.transactions}
-              variant="modal"
-              externalSearchQuery={searchQuery}
-              externalOnlyActionNeeded={onlyActionNeeded}
-            />
+            <div className="relative min-h-[300px] flex flex-col">
+              {modalLoading && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-20 flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+                </div>
+              )}
+              <TransactionTable
+                transactions={filteredModalTransactions}
+                variant="modal"
+                pageSize={5}
+                externalSearchQuery={searchQuery}
+                externalOnlyActionNeeded={onlyActionNeeded}
+              />
+            </div>
           </div>
         </div>
       </div>

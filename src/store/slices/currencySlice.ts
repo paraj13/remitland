@@ -7,12 +7,12 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { CurrencyCode } from "@/types";
 
 interface CurrencyState {
-  selected: CurrencyCode;
+  selected: CurrencyCode | null;
 }
 
 const initialState: CurrencyState = {
-  // USD is the default selected currency per requirements
-  selected: "USD",
+  // null represents "All" currencies initially
+  selected: null,
 };
 
 const currencySlice = createSlice({

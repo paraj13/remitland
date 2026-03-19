@@ -9,13 +9,15 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { openReceiverModal } from "@/store/slices/uiSlice";
+import { fetchTransactions } from "@/store/slices/transactionSlice";
 import { MOCK_RECEIVER, MOCK_RECEIVERS, ACCOUNT_BALANCE } from "@/data/mockData";
 import { Transaction } from "@/types";
+import { getSocket } from "@/lib/socket";
 import {
   ArrowUpRight,
   SlidersHorizontal,
@@ -26,16 +28,47 @@ import {
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
-  const transactions = useAppSelector((state) => state.transactions.items);
+  const { items: transactions, loading } = useAppSelector((state) => state.transactions);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
+
+  useEffect(() => {
+    dispatch(fetchTransactions());
+
+    // WebSocket listener for real-time updates
+    const s = getSocket();
+    if (s) {
+      s.on("status_updated", (data: any) => {
+        console.log("Real-time update received:", data);
+        dispatch(fetchTransactions());
+      });
+    }
+
+    return () => {
+      const s = getSocket();
+      if (s) {
+        s.off("status_updated");
+      }
+    };
+  }, [dispatch]);
 
   /**
    * Opens the ReceiverModal when a transaction row is clicked.
    * Finds the receiver for the transaction's "to" field.
    */
   function handleTransactionClick(tx: Transaction) {
-    const receiver =
-      MOCK_RECEIVERS.find((r) => r.name === tx.to) ?? MOCK_RECEIVER;
+    let receiver =
+      tx.receiverDetails ??
+      MOCK_RECEIVERS.find((r) => r.name === tx.to) ?? 
+      MOCK_RECEIVER;
+
+    // Ensure transactions are populated for the modal
+    if (receiver && (!receiver.transactions || receiver.transactions.length === 0)) {
+      receiver = {
+        ...receiver,
+        transactions: transactions.filter(t => t.to === receiver.name)
+      };
+    }
+
     dispatch(openReceiverModal(receiver));
   }
 
@@ -194,7 +227,15 @@ export default function DashboardPage() {
             </div>
 
             {/* Table Container */}
-            <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+            <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] min-h-[400px] flex flex-col relative">
+              {loading && (
+                <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-[2rem]">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-10 h-10 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+                    <span className="text-sm font-bold text-gray-500">Fetching transactions...</span>
+                  </div>
+                </div>
+              )}
               <TransactionTable 
                 transactions={transactions} 
                 variant="dashboard" 

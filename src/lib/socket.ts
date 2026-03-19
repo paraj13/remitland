@@ -6,8 +6,10 @@
 
 import { io, Socket } from "socket.io-client";
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+const apiOrigin = process.env.NEXT_PUBLIC_API_URL 
+  ? new URL(process.env.NEXT_PUBLIC_API_URL).origin 
+  : "http://localhost:3001";
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || apiOrigin;
 
 let socket: Socket | null = null;
 
@@ -19,7 +21,7 @@ export function getSocket(): Socket {
   if (!socket) {
     socket = io(SOCKET_URL, {
       transports: ["websocket"],
-      autoConnect: true,
+      autoConnect: true, // Enabled for real-time updates
     });
 
     socket.on("connect", () => {
@@ -37,6 +39,8 @@ export function getSocket(): Socket {
 
   return socket;
 }
+
+export { socket };
 
 /**
  * disconnectSocket — cleanly disconnects and clears the singleton.

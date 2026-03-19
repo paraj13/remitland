@@ -80,6 +80,7 @@ export function TransactionTable({
     const matchesSearch =
       !query ||
       tx.to.toLowerCase().includes(query) ||
+      tx.requestId.toLowerCase().includes(query) ||
       tx.status.toLowerCase().includes(query);
 
     const matchesAction = !onlyActionNeeded || tx.status === "needs_action";
@@ -93,6 +94,34 @@ export function TransactionTable({
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+
+  /** Format date strings to a standard readable format */
+  function formatDate(dateStr: string) {
+    if (!dateStr) return "-";
+    // If it's already formatted (mock data style), return as is
+    if (dateStr.includes("|")) return dateStr;
+    
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      
+      const options: Intl.DateTimeFormatOptions = { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      };
+      const formattedDate = date.toLocaleDateString('en-US', options);
+      const formattedTime = date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false 
+      });
+      
+      return `${formattedDate} | ${formattedTime}`;
+    } catch (e) {
+      return dateStr;
+    }
+  }
 
   // Reset to page 1 whenever filters change
   function handleSearchChange(value: string) {
@@ -176,6 +205,7 @@ export function TransactionTable({
               <th>Request ID</th>
               <th>Type</th>
               <th>To</th>
+              <th>Account Number</th>
               <th>Amount</th>
               <th>Status</th>
               <th>Actions</th>
@@ -210,7 +240,7 @@ export function TransactionTable({
                         : "text-[11px] text-gray-400"
                     } font-normal whitespace-nowrap`}
                   >
-                    {tx.dateTime}
+                    {formatDate(tx.dateTime)}
                   </td>
                   <td>
                     <span
@@ -246,6 +276,9 @@ export function TransactionTable({
                       )}
                       {tx.to}
                     </div>
+                  </td>
+                  <td className="text-[12px] text-gray-500 font-mono">
+                    {tx.accountNumber || "—"}
                   </td>
                   <td className="whitespace-nowrap">
                     <div className="flex items-center gap-2">
@@ -346,12 +379,6 @@ function TransactionActions({
           >
             Track Payment
           </Button>
-          <button
-            className="btn btn-primary text-[11px] font-bold py-1.5 px-3 rounded-md"
-            onClick={() => onStatusChange(id, "approved")}
-          >
-            Approve
-          </button>
         </div>
       );
     case "Rejected":
