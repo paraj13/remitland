@@ -83,12 +83,12 @@ export function TransactionTable({
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !query ||
-      tx.to.toLowerCase().includes(query) ||
-      tx.requestId.toLowerCase().includes(query) ||
-      (tx.accountNumber && tx.accountNumber.toLowerCase().includes(query)) ||
-      tx.status.toLowerCase().includes(query);
+      tx.to?.toLowerCase().includes(query) ||
+      tx.requestId?.toLowerCase().includes(query) ||
+      tx.accountNumber?.toLowerCase().includes(query) ||
+      tx.status?.toLowerCase().includes(query);
 
-    const matchesStatus = statusFilter === "All" || tx.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesStatus = statusFilter === "All" || tx.status?.toLowerCase() === statusFilter.toLowerCase();
     const matchesAction = !onlyActionNeeded || tx.status === "needs_action";
 
     return matchesSearch && matchesStatus && matchesAction;

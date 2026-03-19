@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useRouter } from "next/navigation";
 import { openReceiverModal } from "@/store/slices/uiSlice";
 import { fetchTransactions } from "@/store/slices/transactionSlice";
 import { MOCK_RECEIVER, MOCK_RECEIVERS, ACCOUNT_BALANCE } from "@/data/mockData";
@@ -28,6 +29,7 @@ import {
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { items: transactions, loading } = useAppSelector((state) => state.transactions);
   const [paymentMethod, setPaymentMethod] = useState("Cash");
 
@@ -60,33 +62,9 @@ export default function DashboardPage() {
     link.click();
   }
 
-  async function handleAddMockTransaction() {
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-      const res = await fetch(`${baseUrl.replace('/api', '')}/api/transactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: 2,
-          account_number: "ACC-9876543210",
-          type: "send_money",
-          to_name: "Aisha Khan",
-          amount: 150.75,
-          currency: "USD",
-          status: "pending"
-        })
-      });
-      if (res.ok) {
-        // Optional: immediately fetch or wait for websocket
-        dispatch(fetchTransactions());
-      }
-    } catch (err) {
-      console.error("Failed to add mock transaction", err);
-    }
-  }
-
   /**
    * Opens the ReceiverModal when a transaction row is clicked.
+
    * Finds the receiver for the transaction's "to" field.
    */
   function handleTransactionClick(tx: Transaction) {
@@ -120,8 +98,11 @@ export default function DashboardPage() {
                   <br />
                   Balance
                 </h2>
-                <button className="flex items-center gap-1.5 text-base font-bold text-blue-600 hover:opacity-80 transition-opacity">
-                  Add Money
+                <button 
+                  onClick={() => router.push('/transactions/new')}
+                  className="flex items-center gap-1.5 text-base font-bold text-blue-600 hover:opacity-80 transition-opacity"
+                >
+                  New Transaction
                   <ArrowUpRight size={20} />
                 </button>
               </div>
@@ -236,10 +217,10 @@ export default function DashboardPage() {
               </div>
 
               <button 
-                onClick={handleAddMockTransaction}
+                onClick={() => router.push('/transactions/new')}
                 className="w-full py-2 bg-white border border-gray-200 shadow-sm rounded-full text-base font-bold text-gray-900 hover:bg-gray-50 transition-colors mt-4"
               >
-                Proceed (Test Add Transaction)
+                Proceed
               </button>
             </div>
           </div>
