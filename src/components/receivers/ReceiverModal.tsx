@@ -48,7 +48,7 @@ export function ReceiverModal() {
     if (isOpen && receiver) {
       // Clear search when opening a new receiver
       setSearchQuery("");
-      setIsSearchOpen(false);
+      setIsSearchOpen(true);
       // Fetch all for this receiver
       dispatch(fetchModalTransactions()); 
     }
@@ -132,10 +132,15 @@ export function ReceiverModal() {
   // Final display items
   const filteredModalTransactions = modalItems.filter(t => {
     if (!receiver) return false;
-    // const isNameMatch = t.to.toLowerCase().trim() === receiver.name.toLowerCase().trim();
-    // If we have a selected currency, filter by it. Otherwise, show all for this receiver.
+    
+    // Match either SENDER or RECEIVER exactly against the clicked profile
+    const rName = receiver.name.toLowerCase().trim();
+    const isUserMatch = 
+      t.from?.toLowerCase().trim() === rName || 
+      t.to.toLowerCase().trim() === rName;
+
     const isCurrencyMatch = selectedCurrency ? t.currency === selectedCurrency : true;
-    return isCurrencyMatch;
+    return isUserMatch && isCurrencyMatch;
   });
 
   return (

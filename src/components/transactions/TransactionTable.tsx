@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Pagination } from "@/components/ui/Pagination";
 import { useAppDispatch } from "@/store/hooks";
-import { updateTransactionStatus } from "@/store/slices/transactionSlice";
+import { updateTransactionStatus, updateTransactionStatusAsync } from "@/store/slices/transactionSlice";
 import {
   Download,
   Eye,
@@ -142,7 +142,7 @@ export function TransactionTable({
 
   /** Inline status change — dispatches to Redux & would call API in production */
   function handleStatusChange(id: number, status: TransactionStatus) {
-    dispatch(updateTransactionStatus({ id, status }));
+    dispatch(updateTransactionStatusAsync({ id, status }));
   }
 
   return (
@@ -210,6 +210,7 @@ export function TransactionTable({
               <th>Date &amp; Time</th>
               <th>Request ID</th>
               <th>Type</th>
+              <th>From</th>
               <th>To</th>
               <th>Account Number</th>
               <th>Amount</th>
@@ -274,6 +275,9 @@ export function TransactionTable({
                         </span>
                       )}
                     </div>
+                  </td>
+                  <td className="font-medium text-[13px] text-gray-800">
+                    {tx.from}
                   </td>
                   <td className="font-medium text-[13px] text-gray-800">
                     <div className="flex items-center gap-2">
@@ -359,6 +363,7 @@ function getCountryCode(code: string): string {
     CAD: "ca",
     INR: "in",
     EUR: "eu",
+    GBP: "gb",
   };
   return codes[code] ?? "us";
 }
@@ -386,7 +391,7 @@ function TransactionActions({
             onClick={() => onStatusChange(id, "approved")}
             className="text-blue-600 hover:text-blue-800 text-xs"
           >
-            Track Payment
+            Approve
           </Button>
         </div>
       );
@@ -432,14 +437,25 @@ function TransactionActions({
       );
     default:
       return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs flex items-center gap-1"
-        >
-          <Eye size={12} />
-          View
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs flex items-center gap-1"
+          >
+            <Eye size={12} />
+            View
+          </Button>
+          <span className="text-gray-300 text-sm">|</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); onDownload(); }}
+            className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs"
+          >
+            Download
+          </Button>
+        </div>
       );
   }
 }

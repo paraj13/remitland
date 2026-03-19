@@ -24,9 +24,9 @@ const mapApiTransactionToTransaction = (apiTx: ApiTransaction): Transaction => {
 
   const statusMap: Record<string, TransactionStatus> = {
     "pending": "Pending",
-    "approved": "approved",
-    "success": "success",
-    "failed": "failed",
+    "approved": "Approved",
+    "success": "Success",
+    "failed": "Failed",
     "cancelled": "Cancelled",
     "rejected": "Rejected",
     "needs_action": "needs_action",
@@ -37,6 +37,7 @@ const mapApiTransactionToTransaction = (apiTx: ApiTransaction): Transaction => {
     dateTime: apiTx.created_at,
     requestId: apiTx.request_id,
     type: typeMap[apiTx.type] || "Send money",
+    from: apiTx.user.name,
     to: apiTx.to_name,
     currency: apiTx.currency,
     amount: apiTx.amount,
@@ -85,9 +86,6 @@ export const fetchTransactions = createAsyncThunk(
   }
 );
 
-/**
- * fetchModalTransactions — Async thunk specifically for the Receiver Modal
- */
 export const fetchModalTransactions = createAsyncThunk(
   "transactions/fetchModal",
   async (currency: string | void, { rejectWithValue }) => {
@@ -101,6 +99,34 @@ export const fetchModalTransactions = createAsyncThunk(
       
       const data: ApiResponse<ApiTransaction[]> = await response.json();
       return data.data.map(mapApiTransactionToTransaction);
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+/**
+ * updateTransactionStatusAsync — Async thunk to update transaction status via API
+ */
+export const updateTransactionStatusAsync = createAsyncThunk(
+  "transactions/updateStatusAsync",
+  async ({ id, status }: { id: number; status: TransactionStatus }, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/transactions/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update transaction status");
+      }
+      
+      // Update local state immediately on success
+      dispatch(updateTransactionStatus({ id, status }));
+      return { id, status };
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -142,9 +168,13 @@ const transactionSlice = createSlice({
       state,
       action: PayloadAction<{ id: number; status: Transaction["status"] }>
     ) {
-      const tx = state.items.find((t) => t.id === action.payload.id);
-      if (tx) {
-        tx.status = action.payload.status;
+      const mainTx = state.items.find((t) => t.id === action.payload.id);
+      if (mainTx) {
+        mainTx.status = action.payload.status;
+      }
+      const modalTx = state.modalItems.find((t) => t.id === action.payload.id);
+      if (modalTx) {
+        modalTx.status = action.payload.status;
       }
     },
     setLoading(state, action: PayloadAction<boolean>) {

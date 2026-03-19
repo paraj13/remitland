@@ -40,6 +40,29 @@ export default function NewTransactionPage() {
   const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const res = await fetch("/api/users");
+        if (res.ok) {
+          const json = await res.json();
+          setUsers(json.data || []);
+          if (json.data && json.data.length > 0) {
+            setFormData(prev => ({ ...prev, user_id: json.data[0].id }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch users", err);
+      } finally {
+        setLoadingUsers(false);
+      }
+    }
+    fetchUsers();
+  }, []);
+
   // Close dropdown when typing outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -101,8 +124,7 @@ export default function NewTransactionPage() {
     setFlashMessage(null);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-      const res = await fetch(`${baseUrl.replace('/api', '')}/api/transactions`, {
+      const res = await fetch(`/api/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -125,7 +147,7 @@ export default function NewTransactionPage() {
         });
         
         // Show flash message
-        setFlashMessage("Transaction successfully created! Redirecting...");
+        setFlashMessage("Transaction successfully created!");
         setTimeout(() => {
           router.push("/dashboard");
         }, 1500);
@@ -175,6 +197,32 @@ export default function NewTransactionPage() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-bold text-gray-700">Sender (User)</label>
+                <div className="relative">
+                  <select
+                    name="user_id"
+                    value={formData.user_id}
+                    onChange={(e) => setFormData({ ...formData, user_id: parseInt(e.target.value) })}
+                    disabled={loadingUsers}
+                    className="px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-base focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-medium w-full appearance-none pr-10"
+                  >
+                    {loadingUsers ? (
+                      <option>Loading users...</option>
+                    ) : users.length === 0 ? (
+                      <option>No users found</option>
+                    ) : (
+                      users.map(u => (
+                        <option key={u.id} value={u.id}>
+                          {u.name} ({u.email})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <ChevronDown size={18} className="text-gray-400 absolute right-4 top-[18px] pointer-events-none" />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-gray-700">Receiver Name</label>
@@ -290,9 +338,6 @@ export default function NewTransactionPage() {
                     >
                       <option value="pending">Pending</option>
                       <option value="approved">Approved</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="success">Success</option>
                     </select>
                     <ChevronDown size={18} className="text-gray-400 absolute right-4 top-[18px] pointer-events-none" />
                   </div>

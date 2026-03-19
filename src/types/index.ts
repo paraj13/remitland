@@ -7,10 +7,12 @@ export type CurrencyCode = "AED" | "USD" | "CAD" | "INR" | "EUR" | "USDT";
 export type TransactionStatus =
   | "success"
   | "approved"
+  | "Approved"
   | "Pending"
   | "Cancelled"
   | "Rejected"
   | "failed"
+  | "Failed"
   | "Success"
   | "needs_action";
 
@@ -39,6 +41,7 @@ export interface Transaction {
   dateTime: string;
   requestId: string;
   type: TransactionType;
+  from: string;
   to: string;
   currency: CurrencyCode;
   amount: string;
