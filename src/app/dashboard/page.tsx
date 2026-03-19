@@ -37,7 +37,8 @@ export default function DashboardPage() {
     // WebSocket listener for real-time updates
     const s = getSocket();
     if (s) {
-      s.on("status_updated", (data: any) => {
+      s.emit("join", "transactions");
+      s.on("transactions", (data: any) => {
         console.log("Real-time update received:", data);
         dispatch(fetchTransactions());
       });
@@ -46,10 +47,43 @@ export default function DashboardPage() {
     return () => {
       const s = getSocket();
       if (s) {
-        s.off("status_updated");
+        s.off("transactions");
+        s.emit("leave", "transactions");
       }
     };
   }, [dispatch]);
+
+  function downloadSampleFile() {
+    const link = document.createElement("a");
+    link.href = "/sample.docx";
+    link.download = "remitland-transaction-report.docx";
+    link.click();
+  }
+
+  async function handleAddMockTransaction() {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const res = await fetch(`${baseUrl.replace('/api', '')}/api/transactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: 2,
+          account_number: "ACC-9876543210",
+          type: "send_money",
+          to_name: "Aisha Khan",
+          amount: 150.75,
+          currency: "USD",
+          status: "pending"
+        })
+      });
+      if (res.ok) {
+        // Optional: immediately fetch or wait for websocket
+        dispatch(fetchTransactions());
+      }
+    } catch (err) {
+      console.error("Failed to add mock transaction", err);
+    }
+  }
 
   /**
    * Opens the ReceiverModal when a transaction row is clicked.
@@ -201,8 +235,11 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <button className="w-full py-2 bg-white border border-gray-200 shadow-sm rounded-full text-base font-bold text-gray-900 hover:bg-gray-50 transition-colors mt-4">
-                Proceed
+              <button 
+                onClick={handleAddMockTransaction}
+                className="w-full py-2 bg-white border border-gray-200 shadow-sm rounded-full text-base font-bold text-gray-900 hover:bg-gray-50 transition-colors mt-4"
+              >
+                Proceed (Test Add Transaction)
               </button>
             </div>
           </div>
@@ -213,7 +250,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-bold text-gray-900">Transactions</h2>
               <div className="flex items-center gap-2">
-                <button className="flex items-center gap-2 px-4 py-2 bg-gray-100/50 rounded-full text-[13px] font-bold text-gray-500">
+                <button onClick={downloadSampleFile} className="flex items-center gap-2 px-4 py-2 bg-gray-100/50 rounded-full text-[13px] font-bold text-gray-500 hover:bg-gray-100 transition-colors">
                   Export as
                   <span className="text-[10px] opacity-30">▾</span>
                 </button>

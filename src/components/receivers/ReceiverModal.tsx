@@ -40,6 +40,7 @@ export function ReceiverModal() {
   // Search and toggle state
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("All");
   const [onlyActionNeeded, setOnlyActionNeeded] = useState(false);
 
   // 1. On mount/open, fetch ALL transactions for this receiver to find available currencies
@@ -55,7 +56,8 @@ export function ReceiverModal() {
     // WebSocket listener for real-time updates when modal is open
     const s = getSocket();
     if (s) {
-      s.on("status_updated", (data: any) => {
+      s.emit("join", "transactions");
+      s.on("transactions", (data: any) => {
         if (isOpen && receiver) {
           console.log("Modal real-time update received:", data);
           // Re-fetch both dashboard and modal data to be safe
@@ -68,7 +70,8 @@ export function ReceiverModal() {
     return () => {
       const s = getSocket();
       if (s) {
-        s.off("status_updated");
+        s.off("transactions");
+        s.emit("leave", "transactions");
       }
     };
   }, [isOpen, receiver, dispatch, selectedCurrency]);
@@ -117,6 +120,13 @@ export function ReceiverModal() {
 
   function handleClose() {
     dispatch(closeReceiverModal());
+  }
+
+  function downloadSampleFile() {
+    const link = document.createElement("a");
+    link.href = "/sample.docx";
+    link.download = "remitland-transaction-report.docx";
+    link.click();
   }
 
   // Final display items
@@ -295,14 +305,25 @@ export function ReceiverModal() {
                 {/* Search Integration */}
                 <div className="flex items-center gap-2">
                   {isSearchOpen && (
-                    <input
-                      type="text"
-                      placeholder="Search transactions..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-full text-xs font-medium focus:outline-none focus:border-blue-200 transition-all w-48"
-                      autoFocus
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Search transactions..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-full text-xs font-medium focus:outline-none focus:border-blue-200 transition-all w-48"
+                        autoFocus
+                      />
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-full text-xs font-medium focus:outline-none focus:border-blue-200 transition-all cursor-pointer"
+                      >
+                        <option value="All">All Statuses</option>
+                        <option value="approved">Approved</option>
+                        <option value="pending">Pending</option>
+                      </select>
+                    </div>
                   )}
                   <div 
                     onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -315,7 +336,10 @@ export function ReceiverModal() {
                 </div>
 
                 {/* Download Icon */}
-                <div className="w-10 h-10 border border-gray-100 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 transition-colors cursor-pointer">
+                <div 
+                  onClick={downloadSampleFile}
+                  className="w-10 h-10 border border-gray-100 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 transition-colors cursor-pointer"
+                >
                   <Download size={18} />
                 </div>
                 {/* Only Action Needed Toggle */}
@@ -352,6 +376,7 @@ export function ReceiverModal() {
                 variant="modal"
                 pageSize={5}
                 externalSearchQuery={searchQuery}
+                externalStatusFilter={statusFilter}
                 externalOnlyActionNeeded={onlyActionNeeded}
               />
             </div>

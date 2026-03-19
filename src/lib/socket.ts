@@ -6,10 +6,8 @@
 
 import { io, Socket } from "socket.io-client";
 
-const apiOrigin = process.env.NEXT_PUBLIC_API_URL 
-  ? new URL(process.env.NEXT_PUBLIC_API_URL).origin 
-  : "http://localhost:3001";
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || apiOrigin;
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000";
+
 
 let socket: Socket | null = null;
 

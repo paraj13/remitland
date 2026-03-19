@@ -33,6 +33,8 @@ interface TransactionTableProps {
   variant?: "dashboard" | "modal";
   /** External control for search query (optional) */
   externalSearchQuery?: string;
+  /** External control for status filter (optional) */
+  externalStatusFilter?: string;
   /** External control for action toggle (optional) */
   externalOnlyActionNeeded?: boolean;
   /** Callback for row click */
@@ -54,6 +56,7 @@ export function TransactionTable({
   pageSize = ROWS_PER_PAGE,
   variant = "modal",
   externalSearchQuery,
+  externalStatusFilter,
   externalOnlyActionNeeded,
   onRowClick,
 }: TransactionTableProps) {
@@ -64,6 +67,7 @@ export function TransactionTable({
   const [activeTab, setActiveTab] = useState("All");
 
   const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
+  const statusFilter = externalStatusFilter !== undefined ? externalStatusFilter : "All";
   const onlyActionNeeded = externalOnlyActionNeeded !== undefined ? externalOnlyActionNeeded : internalOnlyActionNeeded;
 
   // ---- Client-side filter ----
@@ -81,11 +85,13 @@ export function TransactionTable({
       !query ||
       tx.to.toLowerCase().includes(query) ||
       tx.requestId.toLowerCase().includes(query) ||
+      (tx.accountNumber && tx.accountNumber.toLowerCase().includes(query)) ||
       tx.status.toLowerCase().includes(query);
 
+    const matchesStatus = statusFilter === "All" || tx.status.toLowerCase() === statusFilter.toLowerCase();
     const matchesAction = !onlyActionNeeded || tx.status === "needs_action";
 
-    return matchesSearch && matchesAction;
+    return matchesSearch && matchesStatus && matchesAction;
   });
 
   // ---- Pagination ----
@@ -314,7 +320,10 @@ export function TransactionTable({
                           View
                         </button>
                         <span className="text-gray-300 text-sm">|</span>
-                        <button className="text-blue-600 hover:opacity-70 transition-opacity">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); downloadSampleFile(); }}
+                          className="text-blue-600 hover:opacity-70 transition-opacity"
+                        >
                           Download File
                         </button>
                       </div>
@@ -404,7 +413,7 @@ function TransactionActions({
         <Button
           variant="ghost"
           size="sm"
-          onClick={onDownload}
+          onClick={(e) => { e.stopPropagation(); onDownload(); }}
           className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs"
         >
           <Download size={12} />
